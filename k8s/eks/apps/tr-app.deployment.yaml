@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisbank-tr-deployment
+spec:
+  selector:
+    matchLabels:
+      app: redisbank-tr
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redisbank-tr
+    spec:
+      containers:
+      - name: redisbank-tr
+        image: 735486936198.dkr.ecr.us-east-1.amazonaws.com/redisbank-transactions:latest
+        imagePullPolicy: Always
+        ports:
+        - name: redisbank-tr
+          containerPort: 8083
+        env:
+        - name: SPRING_REDIS_HOSTTR
+          value: "redis-15091.c256.us-east-1-2.ec2.cloud.redislabs.com"
+        - name: SPRING_REDIS_PORTTR
+          value: "15091"
+        - name: SPRING_REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: redb-tr-db
+              key: service_name
+        - name: SPRING_REDIS_PORT
+          valueFrom:
+            secretKeyRef:
+              name: redb-tr-db
+              key: port
+        - name: SPRING_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redb-tr-db
+              key: password
+        #- name: SPRING_PROFILES_ACTIVE
+        #  value: "tls"

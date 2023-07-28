@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisbank-dg-deployment
+spec:
+  selector:
+    matchLabels:
+      app: redisbank-dg
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redisbank-dg
+    spec:
+      containers:
+      - name: redisbank-dg
+        image: 735486936198.dkr.ecr.us-east-1.amazonaws.com/redisbank-datageneration:latest
+        imagePullPolicy: Always
+        ports:
+        - name: redisbank-dg
+          containerPort: 8080
+        env:
+        - name: SPRING_REDIS_HOST
+          value: "redis-15091.c256.us-east-1-2.ec2.cloud.redislabs.com"
+        - name: SPRING_REDIS_PORT
+          value: "15091"
+        #- name: SPRING_PROFILES_ACTIVE
+        #  value: "tls"

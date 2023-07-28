@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisbank-pfm-deployment
+spec:
+  selector:
+    matchLabels:
+      app: redisbank-pfm
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redisbank-pfm
+    spec:
+      containers:
+      - name: redisbank-pfm
+        image: 735486936198.dkr.ecr.us-east-1.amazonaws.com/redisbank-pfm:latest
+        imagePullPolicy: Always
+        ports:
+        - name: redisbank-pfm
+          containerPort: 8081
+        env:
+        - name: SPRING_REDIS_HOSTTR
+          value: "redis-15091.c256.us-east-1-2.ec2.cloud.redislabs.com"
+        - name: SPRING_REDIS_PORTTR
+          value: "15091"
+        - name: SPRING_REDIS_HOST
+          value: "redis-15091.c256.us-east-1-2.ec2.cloud.redislabs.com"
+        - name: SPRING_REDIS_PORT
+          value: "15091"
+        - name: SPRING_REDIS_PASSWORD
+          value: "jaS5xwkDhM14Nfjg4V1cmcxSPTyuexbr"
+        #- name: SPRING_PROFILES_ACTIVE
+        #  value: "tls"

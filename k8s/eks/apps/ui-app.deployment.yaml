@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisbank-ui-deployment
+spec:
+  selector:
+    matchLabels:
+      app: redisbank-ui
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redisbank-ui
+    spec:
+      containers:
+      - name: redisbank-ui
+        image: 735486936198.dkr.ecr.us-east-1.amazonaws.com/redisbank-ui:latest
+        imagePullPolicy: Always
+        ports:
+        - name: redisbank-ui
+          containerPort: 8080
+        env:
+        - name: AM_URI
+          value: "http://am.us-east-1.srini.demo.redislabs.com"
+        - name: PFM_URI
+          value: "http://pfm.us-east-1.srini.demo.redislabs.com"
+        - name: TR_URI
+          value: "http://tr.us-east-1.srini.demo.redislabs.com"
+        - name: STOMP_HOST
+          value: "ui.us-east-1.srini.demo.redislabs.com"
+        - name: STOMP_PORT
+          value: "80"
+        - name: STOMP_PROTOCOL
+          value: "ws"
+        - name: SPRING_REDIS_HOST
+          value: "redis-15091.c256.us-east-1-2.ec2.cloud.redislabs.com"
+        - name: SPRING_REDIS_PORT
+          value: "15091"
+        #- name: SPRING_PROFILES_ACTIVE
+        #  value: "tls"
