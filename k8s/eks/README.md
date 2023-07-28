@@ -85,15 +85,82 @@ aws ecr create-repository \
 --image-tag-mutability MUTABLE \
 --image-scanning-configuration scanOnPush=false \
 --region us-east-1
-
-
 ```
 
+Now authenticate to the repos.
+
+```
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <REPLACE-THIS_ACCOUNTID>.dkr.ecr.<REGION>.amazonaws.com
+```
+Example: Here is an example one. Do not run this command as is.
+
+```
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 735486536198.dkr.ecr.us-east-1.amazonaws.com
+```
 
 ## Build micro services docker images and pushing it to ECR
+Now build each micro service docker images and publish it to your repo
+
+Here are typical example commands, for each micro service. Do not use it as is. Replace the Image name and your ECR Repo name.
+
+### Micro Service 1
+
+```
+cd redis-bank-am
+./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=735486936198.dkr.ecr.us-east-1.amazonaws.com/redisbank-am:latest
+
+docker push 735486536198.dkr.ecr.us-east-1.amazonaws.com/redisbank-am:latest
+```
+
+### Micro service 2
+```
+cd redisbank-datageneration
+./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=735486936198.dkr.ecr.us-east-1.amazonaws.com/redisbank-datageneration:latest
+
+docker push 735486536198.dkr.ecr.us-east-1.amazonaws.com/redisbank-datageneration:latest
+```
+
+### Micro service 3
+```
+cd redisbank-pfm
+./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=735486936198.dkr.ecr.us-east-1.amazonaws.com/redisbank-pfm:latest
+
+docker push 735486536198.dkr.ecr.us-east-1.amazonaws.com/redisbank-pfm:latest
+```
+
+### Micro service 4
+```
+cd redisbank-transactions
+./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=735486936198.dkr.ecr.us-east-1.amazonaws.com/redisbank-transactions:latest
+
+docker push 735486536198.dkr.ecr.us-east-1.amazonaws.com/redisbank-transactions:latest
+```
+
+### Micro service 5
+    ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=735486936198.dkr.ecr.us-east-1.amazonaws.com/redisbank-ui:latest
+
+    docker push 735486936198.dkr.ecr.us-east-1.amazonaws.com/redisbank-ui:latest
+
+```
+cd redisbank-ui
+./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=735486936198.dkr.ecr.us-east-1.amazonaws.com/redisbank-ui:latest
+
+docker push 735486536198.dkr.ecr.us-east-1.amazonaws.com/redisbank-ui:latest
+```
 
 ## (OPTIONAL) Deploy Redis Enterprise Cloud in the Cloud (if not using Redis on K8s)
+Deploy Redis Enterprise Cloud on AWS at https://app.redislabs.com/#/
+You can choose eiether `flexible` or `fixed` subscription.
+Deploy a database of size 500MB. Make sure you choose [Redis Stack](https://redis.com/blog/introducing-redis-stack/)
 
+Once you deploy your Redis Enterprise Cloud on AWS, get your database end point details.
+For example, it may look something like this:
+
+```
+redis_host: redis-15091.c256.us-east-1-2.ec2.cloud.redislabs.com
+redis_port: 15091
+redis_password: jaS5xwkDhM14Nfjg4V1cmcxSPTyuexbr
+```
 
 ## Elastic Kubernetes Service
 
