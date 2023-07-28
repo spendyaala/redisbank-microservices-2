@@ -20,7 +20,7 @@ The instructions below detail the steps for getting Redis Enterprise configured 
 
 If you are not yet a Redis active-active aficionado, you may find it simpler to get started by deploying a standard Redis Enterprise cluster (and databases) on EKS within a single region. Once everything is working end to end, you can deploy a second EKS cluster and configure an active-active database. Finally, deploy the data generation application to a region separate from the UI and microservices (e.g. 'US West').
 
-# AWS CLI configuration
+## AWS CLI configuration
 ```
 aws configure
 ```
@@ -41,6 +41,58 @@ AWS Secret Access Key [None]: 3+QBPqZEWIFOo5FF0oODFEDgb0Yx4Uk9pcM0MvY
 Default region name [None]: us-west-2
 Default output format [None]:
 ```
+
+## Create an ECR repo & authenticate
+
+```
+aws ecr create-repository \
+--repository-name <REPLACE_THIS_my_private_repo> \
+--image-tag-mutability MUTABLE \
+--image-scanning-configuration scanOnPush=false \
+--region us-east-1
+```
+You are going to create an ECR repo for each of the micro services you are going to build.
+
+For example: You will create one repo for each microservice.
+
+```
+aws ecr create-repository \
+--repository-name redisbank-am \
+--image-tag-mutability MUTABLE \
+--image-scanning-configuration scanOnPush=false \
+--region us-east-1
+
+aws ecr create-repository \
+--repository-name redisbank-datageneration \
+--image-tag-mutability MUTABLE \
+--image-scanning-configuration scanOnPush=false \
+--region us-east-1
+
+aws ecr create-repository \
+--repository-name redisbank-pfm \
+--image-tag-mutability MUTABLE \
+--image-scanning-configuration scanOnPush=false \
+--region us-east-1
+
+aws ecr create-repository \
+--repository-name redisbank-transactions \
+--image-tag-mutability MUTABLE \
+--image-scanning-configuration scanOnPush=false \
+--region us-east-1
+
+aws ecr create-repository \
+--repository-name redisbank-ui \
+--image-tag-mutability MUTABLE \
+--image-scanning-configuration scanOnPush=false \
+--region us-east-1
+
+
+```
+
+
+## Build micro services docker images and pushing it to ECR
+
+## (OPTIONAL) Deploy Redis Enterprise Cloud in the Cloud (if not using Redis on K8s)
 
 
 ## Elastic Kubernetes Service
