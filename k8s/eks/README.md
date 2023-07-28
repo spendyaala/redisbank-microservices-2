@@ -149,6 +149,11 @@ docker push 735486536198.dkr.ecr.us-east-1.amazonaws.com/redisbank-ui:latest
 ```
 
 ## (OPTIONAL) Deploy Redis Enterprise Cloud in the Cloud (if not using Redis on K8s)
+This application can use either a fully managed DBaaS (Database-as-a-Service) from Redis called `Redis Enterprise Cloud` or you can use `Redis Enterprise Software` running off the docker containers.  
+
+If you wan to go with `Redis Enterprise Cloud`, perform these steps.
+Otherwise, it is assumed you are going with `Redis Enterprise Software` running off the docker containers. In that case, skip these steps and continue further.
+
 Deploy Redis Enterprise Cloud on AWS at https://app.redislabs.com/#/
 You can choose eiether `flexible` or `fixed` subscription.
 Deploy a database of size 500MB. Make sure you choose [Redis Stack](https://redis.com/blog/introducing-redis-stack/)
@@ -164,50 +169,27 @@ redis_password: jaS5xwkDhM14Nfjg4V1cmcxSPTyuexbr
 
 ## Elastic Kubernetes Service
 
-Login to your subscription via the AWS CLI:
+Make sure you installed `eksctl` and `kubectl`.
+Ensure your `aws cli` is configured.
+
+Now go ahead and create an EKS cluster.
 
 ```
-az login
-```
-Get your preferred region names (e.g. UK regions):
-
-```
-az account list-locations | grep uk
+eksctl create cluster --name <REPLACE_THIS_CLUSTER_NAME> --region us-east-1 --nodegroup-name standard-workers --node-type t3.medium --nodes=3 --nodes-min 1 --nodes-max 4 --managed
 ```
 
-Create a resource group:
+Here is an example:
+```
+eksctl create cluster --name redis-microserv-eks --region us-east-1 --nodegroup-name standard-workers --node-type t3.medium --nodes=3 --nodes-min 1 --nodes-max 4 --managed
+```
+This will take 10 to 15 minutes to spin up an EKS cluster.
 
-```
-az group create --name <resource-group-name> --location <region>
-```
-Create an Azure Container Registry (ACR):
-```
-az acr create --resource-group <resource-group-name> --name <acr> --sku Basic
-```
-Stand up a cluster:
-
-```
-az aks create \
---resource-group <resource-group-name> \
---name <cluster-name> \
---enable-managed-identity \
---node-count 4 \
---generate-ssh-keys \
---attach-acr <acr> \
---node-vm-size Standard_D4s_v3
-```
-Connect to the AKS cluster:
-```
-az aks get-credentials --resource-group <resource-group-name> --name <cluster-name>
-```
-
-* For an active-active demo, you need to create two AKS clusters (for example, in separate Azure regions).
-
-* If you have issues provisioning AKS clusters, check the virtual machine [quota](https://learn.microsoft.com/en-us/azure/quotas/view-quotas) for your region.
-
+* For an active-active demo, you need to create two EKS clusters (for example, in separate AWS regions).
 * Make sure you meet the minimum required specification (vCPUs and RAM) for Redis Enterprise when configuring your cluster.
 
 ## Install Redis Enterprise operator and set up cluster
+
+If you have skipped `Redis Enterprise Cloud` deployment above, then you should perform this step. Otherwise, skip this step and continue, as you already have a fully managed `Redis Enterprise Cloud` running.
 
 Refer to [this documentation](https://docs.redis.com/latest/kubernetes/deployment/quick-start/) to install Redis Enterprise on Kubernetes.
 
@@ -240,25 +222,6 @@ crdb-cli crdb create \
 
 > **_NOTE:_** The active-active database command above isn't using the password flag. If testing the deployments using the [standard database example](../aks/db/eventbus-db.yaml), you can set an empty password by creating a Kubernetes secret before you create the database: `kubectl create secret generic redb-eventbus --from-literal=password=''`
 
-## Build container images and push to Azure Container Registry
-
-Build a Docker image using:
-
-```
-./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=<acrname>.azurecr.io/redisbank-ui
-```
-
-Login to Azure Container Registry:
-
-```
-az acr login --name <acrname>
-```
-
-Push Docker image using:
-
-```
-docker push <acrname>.azurecr.io/redisbank-ui:latest
-```
 
 ## Deployments, services and ingress
 
@@ -304,6 +267,47 @@ env:
       secretKeyRef:
         name: redb-am-db
         key: password
+```
+
+Here are a few example reference commands to create secrets and deploying the microservices.
+
+#### Creating secrets
+For redb-am-db:
+```
+kubectl create secret generic redb-am-db --from-literal=service_name=redis-15091.c256.us-east-1-2.ec2.cloud.redislabs.com --from-literal=port=15091 --from-literal=password=jaS5xwkDhM14Nfjg4V1cmcxSPTyuexbr
+```
+
+For redb-pfm-db:
+```
+kubectl create secret generic redb-pfm-db --from-literal=service_name=redis-15091.c256.us-east-1-2.ec2.cloud.redislabs.com --from-literal=port=15091 --from-literal=password=jaS5xwkDhM14Nfjg4V1cmcxSPTyuexbr
+```
+
+For redb-tr-db:
+```
+kubectl create secret generic redb-tr-db --from-literal=service_name=redis-15091.c256.us-east-1-2.ec2.cloud.redislabs.com --from-literal=port=15091 --from-literal=password=jaS5xwkDhM14Nfjg4V1cmcxSPTyuexbr
+```
+#### Starting the pods.
+
+```
+kubectl apply -f am-app.service.yaml -f am-app.ingress.yaml -f am-app.service.yaml
+kubectl apply -f dg-app.yaml
+kubectl apply -f pfm-app.service.yaml -f pfm-app.ingress.yaml -f pfm-app.service.yaml
+kubectl apply -f tr-app.service.yaml -f tr-app.ingress.yaml -f tr-app.service.yaml
+kubectl apply -f ui-app.service.yaml -f ui-app.ingress.yaml -f ui-app.service.yaml
+```
+
+When done, if you want to shutdown your cluster, simply run this:
+```
+eksctl get cluster --region=us-east-1
+```
+Output would look like this:
+```
+NAME                REGION                EKSCTL CREATED
+redis-microserv-eks        us-east-1        True
+```
+Now delete the cluster.
+```
+eksctl delete cluster --region=us-east-1 --name=redis-microserv-eks
 ```
 
 ### Questions, support, issues?
